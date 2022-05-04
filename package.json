@@ -1,0 +1,14 @@
+{
+	"name": "splash-backend",
+	"description": "",
+	"main": "dist/app.js",
+	"scripts": {
+		"start": "node dist/app.js",
+		"dev": "ts-node --files src/app.ts",
+		"build": ""
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"typescript": "^4.4.3"
+	}
+}
