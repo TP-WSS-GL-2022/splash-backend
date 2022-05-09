@@ -1,4 +1,5 @@
-import NodeMediaServer from "node-media-server"
+import NodeMediaServer from "node-media-server";
+
 
 const server = new NodeMediaServer({
 	rtmp: {
@@ -15,7 +16,6 @@ const server = new NodeMediaServer({
 	}
 })
 
-server.run()
 
 server.on("preConnect", (id, args) => {
 	console.log("[NodeEvent on preConnect]", `id=${id} args=${JSON.stringify(args)}`)
@@ -76,3 +76,5 @@ server.on("donePlay", (id, StreamPath, args) => {
 		`id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`
 	)
 })
+
+server.run()
