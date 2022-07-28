@@ -1,17 +1,16 @@
-import NodeMediaServer from "node-media-server";
-
+import NodeMediaServer from "node-media-server"
 
 const server = new NodeMediaServer({
 	rtmp: {
 		port: 1935,
-		chunk_size: 60000,
+		chunk_size: 300_000,
 		gop_cache: true,
 		ping: 30,
 		ping_timeout: 60
 	},
 	http: {
 		mediaroot: "/",
-		port: 3490,
+		port: +(process.env.PORT ?? "3490"),
 		allow_origin: "*"
 	}
 })
