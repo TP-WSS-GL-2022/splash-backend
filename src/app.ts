@@ -1,11 +1,16 @@
 import axios from "axios"
 import express from "express"
 import { Timestamp } from "firebase-admin/firestore"
+import ffmpeg from "fluent-ffmpeg"
 import fs from "fs"
 import NodeMediaServer from "node-media-server"
 import path from "path"
 
+import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg"
+
 import { keysColl, streamsColl } from "./firebase"
+
+ffmpeg.setFfmpegPath(ffmpegPath)
 
 const app = express()
 const server = new NodeMediaServer({
@@ -22,7 +27,7 @@ const server = new NodeMediaServer({
 		allow_origin: "*"
 	},
 	trans: {
-		ffmpeg: "C:/Programmes/ffmpeg/bin/ffmpeg.exe",
+		ffmpeg: ffmpegPath,
 		tasks: [
 			{
 				app: "live",
@@ -71,6 +76,7 @@ server.on("prePublish", async (id, streamPath) => {
 })
 
 server.on("donePublish", async (id, streamPath) => {
+	const secret = streamPath.slice(6)
 	const filename = fs.readdirSync(path.join(__dirname, "..", streamPath))[0]
 	if (!filename) return
 
@@ -81,34 +87,32 @@ server.on("donePublish", async (id, streamPath) => {
 		.split("-")
 		.map(i => +i)
 	const obsStart = new Date(year, month - 1, day, hour, minute, second)
-	const obsEnd = new Date()
 
 	const nmsId = <string>(<any>server.getSession(id)).id
-	const snaps = await streamsColl.where("nmsId", "==", nmsId).get()
-	const snap = snaps.docs[0]
-	if (!snap || !snap.exists) return
+	const streamSnaps = await streamsColl.where("nmsId", "==", nmsId).get()
+	const streamSnap = streamSnaps.docs[0]
+	if (!streamSnap || !streamSnap.exists) return
 
-	const stream = snap.data()
+	const userSnaps = await keysColl.where("secret", "==", secret).get()
+	const userSnap = userSnaps.docs[0]
+	if (!userSnap || !userSnap.exists) return
+
+	const stream = streamSnap.data()
+	const user = userSnap.data()
 
 	// If OBS was stopped before UI clicked start, delete stream object
+	const filePath = path.join(__dirname, "..", streamPath, filename)
 	if (stream.startedAt === null) {
-		await snap.ref.delete()
-		fs.unlinkSync(path.join(__dirname, "..", streamPath, filename))
+		await streamSnap.ref.delete()
+		fs.unlinkSync(filePath)
 		return
 	}
 
 	const streamStart = stream.startedAt.toDate()
 	const streamEnd = stream.endedAt?.toDate() ?? new Date()
-	await snap.ref.update({
+	await streamSnap.ref.update({
 		nmsId: null,
 		endedAt: stream.endedAt ?? Timestamp.now()
-	})
-
-	console.log({
-		obsStart: obsStart.toLocaleString(),
-		streamStart: streamStart.toLocaleString(),
-		streamEnd: streamEnd.toLocaleString(),
-		obsEnd: obsEnd.toLocaleString()
 	})
 })
 
