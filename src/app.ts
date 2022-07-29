@@ -17,21 +17,30 @@ const server = new NodeMediaServer({
 		mediaroot: "/",
 		port: 3490,
 		allow_origin: "*"
+	},
+	trans: {
+		ffmpeg: "C:/Programmes/ffmpeg/bin/ffmpeg.exe",
+		tasks: [
+			{
+				app: "live",
+				mp4: true,
+				mp4Flags: "[movflags=frag_keyframe+empty_moov]"
+			}
+		]
 	}
 })
 
 app.get("/api/:userId/live", async (req, res) => {
-	const snaps = await keysColl.where("key", "==", req.params.userId).get()
-	const snap = snaps.docs[0]
-	if (!snap || !snap.exists) {
+	const snap = await keysColl.doc(req.params.userId).get()
+	if (!snap.exists) {
 		return res.status(404).send("Invalid userId")
 	}
 
-	const user = snap.data()
+	const key = snap.data()!
 
 	const { data } = await axios({
 		method: "GET",
-		url: `http://localhost:3490/live/${user.key}.flv`,
+		url: `http://localhost:3490/live/${key.secret}.flv`,
 		responseType: "stream"
 	})
 
