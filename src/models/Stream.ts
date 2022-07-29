@@ -3,7 +3,8 @@ import { iUser } from "./User"
 
 export interface iStream {
 	streamer: DocumentReference<iUser>
-	startedAt: Timestamp
+	nmsId: string | null
+	startedAt: Timestamp | null
 	endedAt: Timestamp | null
 	title: string
 }

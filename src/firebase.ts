@@ -16,9 +16,9 @@ export const firebase = initializeApp({
 	})
 })
 
-const converter = <iModel extends {}>(): FirestoreDataConverter<iModel & { id: string }> => ({
+const converter = <iModel extends {}>(): FirestoreDataConverter<iModel> => ({
 	toFirestore: model => {
-		const { id, ...rest } = model
+		const { id, ...rest } = <iModel & { id: string }>model
 		return rest
 	},
 	fromFirestore: snap => {
