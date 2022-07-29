@@ -8,7 +8,7 @@ import path from "path"
 
 import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg"
 
-import { keysColl, streamsColl } from "./firebase"
+import { keysColl, streamsColl, usersColl } from "./firebase"
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
@@ -38,17 +38,24 @@ const server = new NodeMediaServer({
 	}
 })
 
-app.get("/api/:userId/live", async (req, res) => {
-	const snap = await keysColl.doc(req.params.userId).get()
-	if (!snap.exists) {
+app.get("/api/:userId/live.flv", async (req, res) => {
+	const keySnap = await keysColl.doc(req.params.userId).get()
+	if (!keySnap.exists) {
 		return res.status(404).send("Invalid userId")
 	}
 
-	const key = snap.data()!
+	const streamSnaps = await streamsColl
+		.where("streamer", "==", usersColl.doc(req.params.userId))
+		.where("startedAt", "!=", null)
+		.where("endedAt", "==", null)
+		.get()
+	const streamSnap = streamSnaps.docs[0]
+	if (!streamSnap?.exists) return res.status(400).send("User is not live streaming")
 
+	const { secret } = keySnap.data()!
 	const { data } = await axios({
 		method: "GET",
-		url: `http://localhost:3490/live/${key.secret}.flv`,
+		url: `http://localhost:3490/live/${secret}.flv`,
 		responseType: "stream"
 	})
 
@@ -60,14 +67,12 @@ server.on("prePublish", async (id, streamPath) => {
 	const secret = streamPath.slice(6)
 	const nmsId = <string>session.id
 
-	const userSnaps = await keysColl.where("secret", "==", secret).get()
-	const userSnap = userSnaps.docs[0]
-	if (!userSnap || !userSnap.exists) {
-		return session.reject()
-	}
+	const keySnaps = await keysColl.where("secret", "==", secret).get()
+	const keySnap = keySnaps.docs[0]
+	if (!keySnap?.exists) return session.reject()
 
 	await streamsColl.add({
-		streamer: userSnap.ref,
+		streamer: usersColl.doc(keySnap.id),
 		nmsId,
 		startedAt: null,
 		endedAt: null,
@@ -91,14 +96,8 @@ server.on("donePublish", async (id, streamPath) => {
 	const nmsId = <string>(<any>server.getSession(id)).id
 	const streamSnaps = await streamsColl.where("nmsId", "==", nmsId).get()
 	const streamSnap = streamSnaps.docs[0]
-	if (!streamSnap || !streamSnap.exists) return
-
-	const userSnaps = await keysColl.where("secret", "==", secret).get()
-	const userSnap = userSnaps.docs[0]
-	if (!userSnap || !userSnap.exists) return
-
+	if (!streamSnap?.exists) return
 	const stream = streamSnap.data()
-	const user = userSnap.data()
 
 	// If OBS was stopped before UI clicked start, delete stream object
 	const filePath = path.join(__dirname, "..", streamPath, filename)
@@ -123,12 +122,12 @@ server.on("donePublish", async (id, streamPath) => {
 		.setStartTime(startTime)
 		.setDuration((streamEnd.getTime() - streamStart.getTime()) / 1000)
 		.outputFormat("mp4")
-		.output(path.join(__dirname, "../videos", `${(<any>stream).id}.mp4`))
+		.output(path.join(__dirname, "../public/videos", `${(<any>stream).id}.mp4`))
 		.once("end", () => fs.unlinkSync(oldFile))
 		.run()
 })
 
-app.use("/api/videos", express.static(path.join(__dirname, "../videos")))
+app.use("/api", express.static(path.join(__dirname, "../public")))
 
 app.listen(80, () => console.log("Server running on port 80"))
 server.run()
