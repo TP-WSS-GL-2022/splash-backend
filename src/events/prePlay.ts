@@ -1,1 +1,1 @@
-export default async (session: any, userId: string, args: object) => {}
+export default async (session: any, nmsId: string, args: object) => {}
