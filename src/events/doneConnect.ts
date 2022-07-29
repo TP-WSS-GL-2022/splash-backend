@@ -1,1 +1,1 @@
-export default (id: string, path: string, args: object) => {}
+export default async (session: any, args: object) => {}

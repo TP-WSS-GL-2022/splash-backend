@@ -25,14 +25,40 @@ const server = new NodeMediaServer({
 	}
 })
 
-server.on("preConnect", preConnect)
-server.on("postConnect", postConnect)
-server.on("doneConnect", doneConnect)
-server.on("prePublish", prePublish)
-server.on("postPublish", postPublish)
-server.on("donePublish", donePublish)
-server.on("prePlay", prePlay)
-server.on("postPlay", postPlay)
-server.on("donePlay", donePlay)
+server.on("preConnect", (id, args) => {
+	preConnect(server.getSession(id), args as any)
+})
+
+server.on("postConnect", (id, args) => {
+	postConnect(server.getSession(id), args as any)
+})
+
+server.on("doneConnect", (id, args) => {
+	doneConnect(server.getSession(id), args as any)
+})
+
+server.on("prePublish", (id, path, args) => {
+	prePublish(server.getSession(id), path.slice(6), args)
+})
+
+server.on("postPublish", (id, path, args) => {
+	postPublish(server.getSession(id), path.slice(6), args)
+})
+
+server.on("donePublish", (id, path, args) => {
+	donePublish(server.getSession(id), path.slice(6), args)
+})
+
+server.on("prePlay", (id, path, args) => {
+	prePlay(server.getSession(id), path.slice(6), args)
+})
+
+server.on("postPlay", (id, path, args) => {
+	postPlay(server.getSession(id), path.slice(6), args)
+})
+
+server.on("donePlay", (id, path, args) => {
+	donePlay(server.getSession(id), path.slice(6), args)
+})
 
 server.run()
