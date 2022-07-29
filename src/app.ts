@@ -115,14 +115,20 @@ server.on("donePublish", async (id, streamPath) => {
 		endedAt: stream.endedAt ?? Timestamp.now()
 	})
 
-	console.log({
-		streamStart: streamStart.getTime(),
-		streamEnd: streamEnd.getTime(),
-		obsStart: obsStart.getTime(),
-	})
+	const oldFile = path.join(__dirname, "../live", secret, filename)
+	let startTime = (streamStart.getTime() - obsStart.getTime()) / 1000
+	startTime = startTime > 1 ? startTime - 1 : 0
+
+	ffmpeg(oldFile)
+		.setStartTime(startTime)
+		.setDuration((streamEnd.getTime() - streamStart.getTime()) / 1000)
+		.outputFormat("mp4")
+		.output(path.join(__dirname, "../videos", `${(<any>stream).id}.mp4`))
+		.once("end", () => fs.unlinkSync(oldFile))
+		.run()
 })
 
-app.use("/api", express.static("../videos"))
+app.use("/api/videos", express.static(path.join(__dirname, "../videos")))
 
 app.listen(80, () => console.log("Server running on port 80"))
 server.run()
