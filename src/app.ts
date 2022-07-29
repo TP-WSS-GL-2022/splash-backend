@@ -55,7 +55,9 @@ app.get("/api/:userId/live.flv", async (req, res) => {
 	const { secret } = keySnap.data()!
 	const { data } = await axios({
 		method: "GET",
-		url: `http://localhost:3490/live/${secret}.flv`,
+		url: `http://${
+			process.env.NODE_ENV === "production" ? "18.143.74.14" : "localhost"
+		}:3490/live/${secret}.flv`,
 		responseType: "stream"
 	})
 
