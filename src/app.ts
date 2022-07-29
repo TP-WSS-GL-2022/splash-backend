@@ -10,11 +10,10 @@ const server = new NodeMediaServer({
 	},
 	http: {
 		mediaroot: "/",
-		port: +(process.env.PORT ?? "3490"),
+		port: 3490,
 		allow_origin: "*"
 	}
 })
-
 
 server.on("preConnect", (id, args) => {
 	console.log("[NodeEvent on preConnect]", `id=${id} args=${JSON.stringify(args)}`)
