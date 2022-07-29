@@ -1,24 +1,22 @@
-import axios from "axios"
-import fs from "fs"
+import ffmpeg from "fluent-ffmpeg"
 import path from "path"
 
-const run = () =>
-	new Promise(async (res, rej) => {
-		const url = `http://localhost:3490/live/wss.flv`
+import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg"
 
-		const { data } = await axios({
-			method: "GET",
-			url,
-			responseType: "stream"
-		})
+ffmpeg.setFfmpegPath(ffmpegPath)
 
-		data.on("data", (chunk: any) => {
-			fs.appendFileSync(path.resolve(__dirname, "video.flv"), chunk)
-		})
+const run = () => {
+	const { obsStart, streamStart, streamEnd } = {
+		obsStart: 1659106382000,
+		streamStart: 1659106389048,
+		streamEnd: 1659106396716
+	}
 
-		data.on("end", res)
-
-		data.on("error", rej)
-	})
+	ffmpeg(path.join(__dirname, "./input.mp4"))
+		.setStartTime((streamStart - obsStart) / 1000)
+		.outputFormat("mp4")
+		.output("output.mp4")
+		.run()
+}
 
 run()

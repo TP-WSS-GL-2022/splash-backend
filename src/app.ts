@@ -114,6 +114,12 @@ server.on("donePublish", async (id, streamPath) => {
 		nmsId: null,
 		endedAt: stream.endedAt ?? Timestamp.now()
 	})
+
+	console.log({
+		streamStart: streamStart.getTime(),
+		streamEnd: streamEnd.getTime(),
+		obsStart: obsStart.getTime(),
+	})
 })
 
 app.use("/api", express.static("../videos"))
