@@ -12,7 +12,7 @@ import { keysColl, streamsColl, usersColl } from "./firebase"
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const PORT = 69
+const PORT = 6969
 const app = express()
 const server = new NodeMediaServer({
 	rtmp: {
