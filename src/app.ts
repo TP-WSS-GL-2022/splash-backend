@@ -1,4 +1,5 @@
 import axios from "axios"
+import cors from "cors"
 import express from "express"
 import { Timestamp } from "firebase-admin/firestore"
 import ffmpeg from "fluent-ffmpeg"
@@ -38,6 +39,8 @@ const server = new NodeMediaServer({
 		]
 	}
 })
+
+app.use(cors())
 
 app.get("/api/:userId/live.flv", async (req, res) => {
 	const keySnap = await keysColl.doc(req.params.userId).get()
