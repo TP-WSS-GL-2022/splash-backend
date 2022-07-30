@@ -12,6 +12,7 @@ import { keysColl, streamsColl, usersColl } from "./firebase"
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
+const PORT = 69
 const app = express()
 const server = new NodeMediaServer({
 	rtmp: {
@@ -131,5 +132,5 @@ server.on("donePublish", async (id, streamPath) => {
 
 app.use("/api", express.static(path.join(__dirname, "../public")))
 
-app.listen(80, () => console.log("Server running on port 80"))
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
 server.run()
