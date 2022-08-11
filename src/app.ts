@@ -136,7 +136,19 @@ server.on("donePublish", async (id, streamPath) => {
 		.setDuration((streamEnd.getTime() - streamStart.getTime()) / 1000)
 		.outputFormat("mp4")
 		.output(path.join(__dirname, "../public/videos", `${(<any>stream).id}.mp4`))
-		.once("end", () => fs.unlinkSync(oldFile))
+		.on("start", () => {
+			console.log(`Started converting ${streamSnap.id}`)
+		})
+		.on("progress", progress => {
+			console.log(`Processing ${streamSnap.id}: ${progress.percent}%`)
+		})
+		.on("error", error => {
+			console.log(`Error converting ${streamSnap.id}`, error)
+		})
+		.on("end", () => {
+			console.log(`Done converting ${streamSnap.id}`)
+			fs.unlinkSync(oldFile)
+		})
 		.run()
 })
 
