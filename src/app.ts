@@ -44,19 +44,26 @@ app.use(cors())
 
 app.get("/api/:userId/live.flv", async (req, res) => {
 	const keySnap = await keysColl.doc(req.params.userId).get()
-	if (!keySnap.exists) {
+	const { secret } = keySnap.data() ?? {}
+	if (!secret) {
 		return res.status(404).send("Invalid userId")
 	}
 
-	const streamSnaps = await streamsColl
-		.where("streamer", "==", usersColl.doc(req.params.userId))
-		.where("startedAt", "!=", null)
-		.where("endedAt", "==", null)
-		.get()
+	const bearerSecret = req.headers.authorization?.split(" ")[1]?.trim()
+	if (!!bearerSecret && bearerSecret !== secret) {
+		return res.status(403).send("Invalid bearer secret")
+	}
+
+	const streamSnaps = !!bearerSecret
+		? await streamsColl.where("streamer", "==", usersColl.doc(req.params.userId)).get()
+		: await streamsColl
+				.where("streamer", "==", usersColl.doc(req.params.userId))
+				.where("startedAt", "!=", null)
+				.where("endedAt", "==", null)
+				.get()
 	const streamSnap = streamSnaps.docs[0]
 	if (!streamSnap?.exists) return res.status(400).send("User is not live streaming")
 
-	const { secret } = keySnap.data()!
 	const { data } = await axios({
 		method: "GET",
 		url: `http://${
