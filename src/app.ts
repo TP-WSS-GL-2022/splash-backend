@@ -67,7 +67,7 @@ app.get("/api/:userId/live.flv", async (req, res) => {
 	const { data } = await axios({
 		method: "GET",
 		url: `http://${
-			process.env.NODE_ENV === "production" ? "18.143.74.14" : "localhost"
+			process.env.NODE_ENV === "production" ? "13.215.209.8" : "localhost"
 		}:3490/live/${secret}.flv`,
 		responseType: "stream"
 	})
